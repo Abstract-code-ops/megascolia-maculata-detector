@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Megascolia maculata — Field Detection Ledger</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500;1,9..144,600&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+
+<style>
+  :root {
+    --ink:          #091413;
+    --panel:        #0F211E;
+    --panel-raised: #142A26;
+    --forest-deep:  #285A48;
+    --forest:       #408A71;
+    --mint:         #B0E4CC;
+    --text:         #DCEEE5;
+    --muted:        #6E9686;
+    --amber:        #E0B34D;
+    --brick:        #C75450;
+
+    --serif: "Fraunces", Georgia, serif;
+    --sans:  "Inter", "Segoe UI", system-ui, sans-serif;
+    --mono:  "IBM Plex Mono", "Fira Mono", monospace;
+    --radius: 3px;
+  }
+
+  * , *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--ink);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  ::selection { background: var(--forest); color: var(--ink); }
+  a { color: var(--mint); }
+  :focus-visible { outline: 2px solid var(--mint); outline-offset: 2px; }
+
+  header {
+    border-bottom: 1px solid var(--forest-deep);
+    padding: 20px 32px;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    background: var(--panel);
+  }
+
+  .brand-mark {
+    width: 38px; height: 38px;
+    flex-shrink: 0;
+    border: 1.5px solid var(--forest);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+  }
+  .brand-mark::before {
+    content: "";
+    width: 14px; height: 14px;
+    background: var(--mint);
+    clip-path: polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%);
+  }
+
+  .header-text h1 {
+    font-family: var(--serif);
+    font-size: 19px;
+    font-weight: 600;
+    font-style: italic;
+    letter-spacing: .2px;
+    color: var(--mint);
+  }
+
+  .header-text p {
+    font-size: 11.5px;
+    color: var(--muted);
+    font-family: var(--mono);
+    margin-top: 2px;
+    letter-spacing: .3px;
+  }
+
+  .badge {
+    margin-left: auto;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--mint);
+    border: 1px solid var(--forest-deep);
+    background: rgba(176,228,204,.06);
+    border-radius: 20px;
+    padding: 4px 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .badge .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--forest);
+    box-shadow: 0 0 6px var(--forest);
+  }
+
+  main { max-width: 1240px; margin: 0 auto; padding: 28px 24px 72px; }
+
+  .primary-tabs {
+    display: flex;
+    gap: 2px;
+    border-bottom: 1px solid var(--forest-deep);
+    margin-bottom: 32px;
+  }
+
+  .primary-tab {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 17px;
+    font-weight: 500;
+    color: var(--muted);
+    background: transparent;
+    border: none;
+    padding: 10px 4px 14px;
+    margin-right: 28px;
+    cursor: pointer;
+    position: relative;
+    transition: color .15s;
+  }
+  .primary-tab.active { color: var(--mint); }
+  .primary-tab.active::after {
+    content: "";
+    position: absolute;
+    left: 0; right: 0; bottom: -1px;
+    height: 2px;
+    background: var(--forest);
+  }
+  .primary-tab:hover:not(.active) { color: var(--text); }
+
+  .primary-panel { display: none; }
+  .primary-panel.active { display: block; }
+
+  .sub-tabs {
+    display: inline-flex;
+    gap: 4px;
+    background: var(--panel);
+    border: 1px solid var(--forest-deep);
+    border-radius: var(--radius);
+    padding: 4px;
+    margin-bottom: 24px;
+  }
+  .sub-tab {
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: .4px;
+    text-transform: uppercase;
+    color: var(--muted);
+    background: transparent;
+    border: none;
+    border-radius: 2px;
+    padding: 8px 20px;
+    cursor: pointer;
+    transition: background .15s, color .15s;
+  }
+  .sub-tab.active { background: var(--forest); color: var(--ink); }
+  .sub-tab:not(.active):hover { color: var(--text); }
+
+  .sub-panel { display: none; }
+  .sub-panel.active { display: block; }
+
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--forest-deep);
+    border-radius: var(--radius);
+    padding: 28px;
+  }
+
+  .drop-zone {
+    border: 1.5px dashed var(--forest-deep);
+    border-radius: var(--radius);
+    padding: 48px 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color .2s, background .2s;
+    position: relative;
+  }
+  .drop-zone:hover, .drop-zone.dragover {
+    border-color: var(--forest);
+    background: rgba(64,138,113,.05);
+  }
+  .drop-zone input[type="file"] {
+    position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%;
+  }
+  .drop-icon { font-size: 34px; margin-bottom: 10px; opacity: .8; }
+  .drop-zone h2 {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 17px;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+  .drop-zone p { color: var(--muted); font-size: 12.5px; font-family: var(--mono); }
+
+  .preview-img {
+    max-height: 240px; max-width: 100%;
+    border-radius: var(--radius);
+    margin: 16px auto 0; display: block;
+    border: 1px solid var(--forest-deep);
+  }
+
+  .controls {
+    display: flex; gap: 20px; align-items: flex-end;
+    flex-wrap: wrap; margin-top: 22px;
+    padding-top: 22px;
+    border-top: 1px solid var(--forest-deep);
+  }
+  .field { display: flex; flex-direction: column; gap: 6px; min-width: 170px; }
+  .field label {
+    font-size: 10.5px; color: var(--muted);
+    font-family: var(--mono); text-transform: uppercase; letter-spacing: 1px;
+  }
+  .field input[type="range"] { accent-color: var(--forest); width: 100%; cursor: pointer; }
+  .field .val { font-family: var(--mono); font-size: 13px; color: var(--mint); min-width: 40px; }
+
+  .run-btn {
+    margin-left: auto;
+    background: var(--forest);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-weight: 700;
+    font-size: 13.5px;
+    letter-spacing: .3px;
+    border: none;
+    border-radius: var(--radius);
+    padding: 12px 30px;
+    cursor: pointer;
+    transition: background .15s, transform .1s;
+    white-space: nowrap;
+  }
+  .run-btn:hover:not(:disabled) { background: var(--mint); }
+  .run-btn:active:not(:disabled) { transform: scale(.97); }
+  .run-btn:disabled { opacity: .35; cursor: not-allowed; }
+
+  .status {
+    font-family: var(--mono); font-size: 12.5px; color: var(--muted);
+    padding: 12px 16px; background: var(--panel);
+    border: 1px solid var(--forest-deep); border-radius: var(--radius);
+    display: none; margin-top: 20px;
+  }
+  .status.visible { display: flex; gap: 10px; align-items: center; }
+  .spinner {
+    width: 13px; height: 13px;
+    border: 2px solid var(--forest-deep); border-top-color: var(--amber);
+    border-radius: 50%; animation: spin .7s linear infinite; flex-shrink: 0;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .error-box {
+    background: rgba(199,84,80,.08);
+    border: 1px solid rgba(199,84,80,.35);
+    border-radius: var(--radius);
+    padding: 14px 18px; color: #E8938F;
+    font-family: var(--mono); font-size: 12.5px;
+    display: none; margin-top: 20px;
+  }
+  .error-box.visible { display: block; }
+
+  .results-section { display: none; margin-top: 28px; }
+  .results-section.visible { display: block; }
+
+  .results-header { display: flex; align-items: baseline; gap: 14px; margin-bottom: 18px; flex-wrap: wrap; }
+  .results-header h2 {
+    font-family: var(--serif); font-style: italic; font-weight: 500; font-size: 18px;
+    color: var(--mint);
+  }
+  .stat-pill {
+    font-family: var(--mono); font-size: 11.5px;
+    padding: 3px 12px; border-radius: 20px;
+    background: rgba(64,138,113,.12); color: var(--mint);
+    border: 1px solid var(--forest-deep);
+  }
+  .stat-pill.amber { background: rgba(224,179,77,.1); color: var(--amber); }
+
+  .img-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 22px; }
+  @media (max-width: 680px) { .img-grid { grid-template-columns: 1fr; } }
+
+  .img-panel { background: var(--panel); border: 1px solid var(--forest-deep); border-radius: var(--radius); overflow: hidden; }
+  .img-panel .panel-label {
+    font-family: var(--mono); font-size: 10.5px; text-transform: uppercase;
+    letter-spacing: 1px; color: var(--muted);
+    padding: 10px 16px; border-bottom: 1px solid var(--forest-deep);
+  }
+  .img-panel img, .img-panel video {
+    width: 100%; display: block; max-height: 440px;
+    object-fit: contain; background: #000;
+  }
+
+  .det-table-wrap { background: var(--panel); border: 1px solid var(--forest-deep); border-radius: var(--radius); overflow: hidden; }
+  table { width: 100%; border-collapse: collapse; font-family: var(--mono); font-size: 12.5px; }
+  thead th {
+    text-align: left; padding: 10px 16px; color: var(--muted);
+    font-size: 10.5px; text-transform: uppercase; letter-spacing: 1px;
+    border-bottom: 1px solid var(--forest-deep);
+    background: rgba(255,255,255,.015);
+  }
+  tbody tr { border-bottom: 1px solid var(--forest-deep); }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: rgba(64,138,113,.05); }
+  td { padding: 10px 16px; vertical-align: middle; color: var(--text); }
+
+  .conf-bar-wrap { display: flex; align-items: center; gap: 10px; }
+  .conf-bar { height: 5px; border-radius: 3px; background: var(--forest); min-width: 4px; transition: width .4s ease; }
+  .conf-val { color: var(--mint); font-weight: 600; min-width: 42px; }
+
+  .empty-state { text-align: center; padding: 40px 20px; color: var(--muted); font-size: 13.5px; }
+  .empty-state .glyph { font-size: 26px; margin-bottom: 10px; opacity: .5; }
+
+  .kpi-strip { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; margin-bottom: 28px; }
+  @media (max-width: 980px) { .kpi-strip { grid-template-columns: repeat(2, 1fr); } }
+
+  .kpi-tag {
+    background: var(--panel);
+    border: 1px solid var(--forest-deep);
+    border-left: 3px solid var(--forest);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+  }
+  .kpi-tag .kpi-label {
+    font-family: var(--mono); font-size: 10px; text-transform: uppercase;
+    letter-spacing: 1px; color: var(--muted); margin-bottom: 8px;
+  }
+  .kpi-tag .kpi-value { font-family: var(--serif); font-size: 27px; font-weight: 600; color: var(--mint); line-height: 1; }
+  .kpi-tag .kpi-value .unit { font-family: var(--mono); font-size: 13px; color: var(--muted); margin-left: 3px; }
+
+  .chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 28px; }
+  @media (max-width: 780px) { .chart-grid { grid-template-columns: 1fr; } }
+
+  .chart-card { background: var(--panel); border: 1px solid var(--forest-deep); border-radius: var(--radius); padding: 20px; }
+  .chart-card h3 { font-family: var(--serif); font-style: italic; font-weight: 500; font-size: 14.5px; color: var(--text); margin-bottom: 14px; }
+  .chart-card canvas { max-height: 220px; }
+
+  .ledger-section-title {
+    font-family: var(--serif); font-style: italic; font-weight: 500;
+    font-size: 16px; color: var(--mint); margin-bottom: 14px;
+  }
+
+  .specimen-tag { font-family: var(--mono); font-size: 12px; color: var(--amber); letter-spacing: .3px; }
+
+  .source-chip {
+    display: inline-block;
+    font-family: var(--mono); font-size: 10px; text-transform: uppercase;
+    letter-spacing: .5px; padding: 2px 8px; border-radius: 3px;
+  }
+  .source-chip.image { background: rgba(64,138,113,.15); color: var(--forest); }
+  .source-chip.video { background: rgba(224,179,77,.15); color: var(--amber); }
+
+  .refresh-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+  .days-select {
+    font-family: var(--mono); font-size: 12px;
+    background: var(--panel); color: var(--text);
+    border: 1px solid var(--forest-deep); border-radius: var(--radius);
+    padding: 7px 12px; cursor: pointer;
+  }
+
+  footer {
+    border-top: 1px solid var(--forest-deep);
+    padding: 18px 32px;
+    font-size: 11.5px; color: var(--muted);
+    font-family: var(--mono); text-align: center;
+    letter-spacing: .3px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand-mark"></div>
+  <div class="header-text">
+    <h1>Megascolia maculata — Field Detection Ledger</h1>
+    <p>model: {{ model_path }} · conf {{ conf }} · iou {{ iou }}</p>
+  </div>
+  <span class="badge"><span class="dot"></span>ACTIVE</span>
+</header>
+
+<main>
+
+  <div class="primary-tabs">
+    <button class="primary-tab active" id="tabDetectBtn">Detect</button>
+    <button class="primary-tab" id="tabLedgerBtn">Ledger</button>
+  </div>
+
+  <!-- ══════════════════ DETECT ══════════════════ -->
+  <div class="primary-panel active" id="detectPanel">
+
+    <div class="sub-tabs">
+      <button class="sub-tab active" id="subImageBtn">Image</button>
+      <button class="sub-tab" id="subVideoBtn">Video</button>
+    </div>
+
+    <!-- Image sub-panel -->
+    <div class="sub-panel active" id="imagePanel">
+      <div class="card">
+        <div class="drop-zone" id="imgDropZone">
+          <input type="file" id="imgFileInput" accept=".jpg,.jpeg,.png,.webp,.bmp">
+          <div class="drop-icon">◈</div>
+          <h2>Drop a photograph here</h2>
+          <p>JPG · PNG · WEBP · BMP — up to 16 MB</p>
+          <img id="imgPreview" class="preview-img" style="display:none;" alt="Preview">
+        </div>
+
+        <div class="controls">
+          <div class="field">
+            <label>Confidence</label>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <input type="range" id="imgConfSlider" min="0.05" max="0.95" step="0.01" value="{{ conf }}">
+              <span class="val" id="imgConfVal">{{ conf }}</span>
+            </div>
+          </div>
+          <div class="field">
+            <label>IoU (NMS)</label>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <input type="range" id="imgIouSlider" min="0.1" max="0.9" step="0.05" value="{{ iou }}">
+              <span class="val" id="imgIouVal">{{ iou }}</span>
+            </div>
+          </div>
+          <button class="run-btn" id="imgRunBtn" disabled>Run Detection</button>
+        </div>
+      </div>
+
+      <div class="status" id="imgStatus"><div class="spinner"></div><span>Running inference…</span></div>
+      <div class="error-box" id="imgErrorBox"></div>
+
+      <div class="results-section" id="imgResultsSection">
+        <div class="results-header">
+          <h2>Result</h2>
+          <span class="stat-pill" id="imgCountPill">0 detections</span>
+          <span class="stat-pill amber" id="imgTimePill">— ms</span>
+        </div>
+        <div class="img-grid">
+          <div class="img-panel"><div class="panel-label">Original</div><img id="imgOrig" src="" alt="Original"></div>
+          <div class="img-panel"><div class="panel-label">Annotated</div><img id="imgAnno" src="" alt="Annotated"></div>
+        </div>
+        <div class="det-table-wrap">
+          <table>
+            <thead><tr><th>#</th><th>Confidence</th><th>Bounding box (px)</th><th>Size (w × h)</th><th>Area %</th></tr></thead>
+            <tbody id="imgDetTable"><tr><td colspan="5"><div class="empty-state">No detections yet</div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Video sub-panel -->
+    <div class="sub-panel" id="videoPanel">
+      <div class="card">
+        <div class="drop-zone" id="vidDropZone">
+          <input type="file" id="vidFileInput" accept=".mp4,.avi,.mov,.mkv">
+          <div class="drop-icon">▶</div>
+          <h2 id="vidDropTitle">Drop a video track here</h2>
+          <p id="vidDropMeta">MP4 · AVI · MOV · MKV — up to 100 MB</p>
+        </div>
+
+        <div class="controls">
+          <div class="field">
+            <label>Confidence</label>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <input type="range" id="vidConfSlider" min="0.05" max="0.95" step="0.01" value="{{ conf }}">
+              <span class="val" id="vidConfVal">{{ conf }}</span>
+            </div>
+          </div>
+          <div class="field">
+            <label>IoU (NMS)</label>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <input type="range" id="vidIouSlider" min="0.1" max="0.9" step="0.05" value="{{ iou }}">
+              <span class="val" id="vidIouVal">{{ iou }}</span>
+            </div>
+          </div>
+          <button class="run-btn" id="vidRunBtn" disabled>Process Video</button>
+        </div>
+      </div>
+
+      <div class="status" id="vidStatus"><div class="spinner"></div><span>Processing frames…</span></div>
+      <div class="error-box" id="vidErrorBox"></div>
+
+      <div class="results-section" id="vidResultsSection">
+        <div class="results-header">
+          <h2>Result</h2>
+          <span class="stat-pill" id="vidCountPill">Max concurrent: 0</span>
+          <span class="stat-pill amber" id="vidTimePill">— ms</span>
+        </div>
+        <div class="img-grid">
+          <div class="img-panel"><div class="panel-label">Original</div><video id="vidOrig" controls></video></div>
+          <div class="img-panel"><div class="panel-label">Annotated</div><video id="vidAnno" controls></video></div>
+        </div>
+        <div class="det-table-wrap">
+          <table>
+            <thead><tr><th>Metric</th><th>Value</th></tr></thead>
+            <tbody id="vidDetTable"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ══════════════════ LEDGER (analytics) ══════════════════ -->
+  <div class="primary-panel" id="ledgerPanel">
+
+    <div class="refresh-row">
+      <span style="font-family:var(--mono); font-size:11.5px; color:var(--muted);">
+        RECORDS LOGGED FROM EVERY DETECTION RUN
+      </span>
+      <select class="days-select" id="daysSelect">
+        <option value="7">Last 7 days</option>
+        <option value="30" selected>Last 30 days</option>
+        <option value="90">Last 90 days</option>
+        <option value="0">All time</option>
+      </select>
+    </div>
+
+    <div class="kpi-strip" id="kpiStrip">
+      <div class="kpi-tag">
+        <div class="kpi-label">Total records</div>
+        <div class="kpi-value" id="kpiTotal">—</div>
+      </div>
+      <div class="kpi-tag">
+        <div class="kpi-label">Wasps found</div>
+        <div class="kpi-value" id="kpiWasps">—</div>
+      </div>
+      <div class="kpi-tag">
+        <div class="kpi-label">Avg. confidence</div>
+        <div class="kpi-value" id="kpiConfidence">—</div>
+      </div>
+      <div class="kpi-tag">
+        <div class="kpi-label">Avg. inference</div>
+        <div class="kpi-value" id="kpiInference">—<span class="unit">ms</span></div>
+      </div>
+      <div class="kpi-tag">
+        <div class="kpi-label">Zero-hit rate</div>
+        <div class="kpi-value" id="kpiZeroHit">—</div>
+      </div>
+    </div>
+
+    <div class="chart-grid">
+      <div class="chart-card">
+        <h3>Records over time</h3>
+        <canvas id="chartDaily"></canvas>
+      </div>
+      <div class="chart-card">
+        <h3>Confidence distribution</h3>
+        <canvas id="chartConfidence"></canvas>
+      </div>
+      <div class="chart-card">
+        <h3>Inference time — recent requests</h3>
+        <canvas id="chartInference"></canvas>
+      </div>
+      <div class="chart-card">
+        <h3>Wasps found by source type</h3>
+        <canvas id="chartSource"></canvas>
+      </div>
+    </div>
+
+    <div class="ledger-section-title">Recent records</div>
+    <div class="det-table-wrap" style="margin-bottom: 20px;">
+      <table>
+        <thead>
+          <tr>
+            <th>Specimen tag</th><th>Timestamp</th><th>Source</th>
+            <th>File</th><th>Count</th><th>Avg. conf.</th><th>Inference</th>
+          </tr>
+        </thead>
+        <tbody id="ledgerTable">
+          <tr><td colspan="7"><div class="empty-state"><div class="glyph">◈</div>No records yet. Run a detection to begin the ledger.</div></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+
+</main>
+
+<footer>Megascolia maculata Detection System · 2026</footer>
+
+<script>
+  /* ═══════════════════ Primary tab switching ═══════════════════ */
+  const tabDetectBtn = document.getElementById("tabDetectBtn");
+  const tabLedgerBtn = document.getElementById("tabLedgerBtn");
+  const detectPanel  = document.getElementById("detectPanel");
+  const ledgerPanel  = document.getElementById("ledgerPanel");
+
+  tabDetectBtn.addEventListener("click", () => {
+    tabDetectBtn.classList.add("active"); tabLedgerBtn.classList.remove("active");
+    detectPanel.classList.add("active"); ledgerPanel.classList.remove("active");
+  });
+  tabLedgerBtn.addEventListener("click", () => {
+    tabLedgerBtn.classList.add("active"); tabDetectBtn.classList.remove("active");
+    ledgerPanel.classList.add("active"); detectPanel.classList.remove("active");
+    loadLedger();
+  });
+
+  /* ═══════════════════ Sub tab switching (Image / Video) ═══════════════════ */
+  const subImageBtn = document.getElementById("subImageBtn");
+  const subVideoBtn = document.getElementById("subVideoBtn");
+  const imagePanel  = document.getElementById("imagePanel");
+  const videoPanel  = document.getElementById("videoPanel");
+
+  subImageBtn.addEventListener("click", () => {
+    subImageBtn.classList.add("active"); subVideoBtn.classList.remove("active");
+    imagePanel.classList.add("active"); videoPanel.classList.remove("active");
+  });
+  subVideoBtn.addEventListener("click", () => {
+    subVideoBtn.classList.add("active"); subImageBtn.classList.remove("active");
+    videoPanel.classList.add("active"); imagePanel.classList.remove("active");
+  });
+
+  /* ═══════════════════ IMAGE detect logic ═══════════════════ */
+  const imgFileInput = document.getElementById("imgFileInput");
+  const imgDropZone  = document.getElementById("imgDropZone");
+  const imgPreview   = document.getElementById("imgPreview");
+  const imgRunBtn    = document.getElementById("imgRunBtn");
+  const imgStatus    = document.getElementById("imgStatus");
+  const imgErrorBox  = document.getElementById("imgErrorBox");
+  const imgResultsSection = document.getElementById("imgResultsSection");
+  const imgConfSlider = document.getElementById("imgConfSlider");
+  const imgConfVal    = document.getElementById("imgConfVal");
+  const imgIouSlider  = document.getElementById("imgIouSlider");
+  const imgIouVal     = document.getElementById("imgIouVal");
+
+  imgConfSlider.addEventListener("input", () => imgConfVal.textContent = parseFloat(imgConfSlider.value).toFixed(2));
+  imgIouSlider.addEventListener("input",  () => imgIouVal.textContent  = parseFloat(imgIouSlider.value).toFixed(2));
+
+  imgDropZone.addEventListener("dragover",  e => { e.preventDefault(); imgDropZone.classList.add("dragover"); });
+  imgDropZone.addEventListener("dragleave", () => imgDropZone.classList.remove("dragover"));
+  imgDropZone.addEventListener("drop", e => {
+    e.preventDefault(); imgDropZone.classList.remove("dragover");
+    const file = e.dataTransfer.files[0];
+    if (file) handleImgFile(file);
+  });
+  imgFileInput.addEventListener("change", () => { if (imgFileInput.files[0]) handleImgFile(imgFileInput.files[0]); });
+
+  function handleImgFile(file) {
+    const reader = new FileReader();
+    reader.onload = e => { imgPreview.src = e.target.result; imgPreview.style.display = "block"; };
+    reader.readAsDataURL(file);
+    imgRunBtn.disabled = false;
+    imgResultsSection.classList.remove("visible");
+    imgErrorBox.classList.remove("visible");
+  }
+
+  imgRunBtn.addEventListener("click", async () => {
+    const file = imgFileInput.files[0];
+    if (!file) return;
+
+    imgRunBtn.disabled = true;
+    imgStatus.classList.add("visible");
+    imgErrorBox.classList.remove("visible");
+    imgResultsSection.classList.remove("visible");
+
+    const fd = new FormData();
+    fd.append("image", file);
+    fd.append("conf", imgConfSlider.value);
+    fd.append("iou",  imgIouSlider.value);
+
+    try {
+      const res = await fetch("/detect-image", { method: "POST", body: fd });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
+        throw new Error(err.error || `HTTP ${res.status}`);
+      }
+      renderImgResults(await res.json());
+    } catch (err) {
+      imgErrorBox.textContent = "Error: " + err.message;
+      imgErrorBox.classList.add("visible");
+    } finally {
+      imgStatus.classList.remove("visible");
+      imgRunBtn.disabled = false;
+    }
+  });
+
+  function renderImgResults(data) {
+    document.getElementById("imgOrig").src = "data:image/png;base64," + data.original_b64;
+    document.getElementById("imgAnno").src = "data:image/png;base64," + data.annotated_b64;
+
+    const n = data.count;
+    document.getElementById("imgCountPill").textContent =
+      n === 0 ? "No detections" : n === 1 ? "1 wasp detected" : `${n} wasps detected`;
+    document.getElementById("imgTimePill").textContent = `${data.inference_ms} ms`;
+
+    const tbody = document.getElementById("imgDetTable");
+    if (n === 0) {
+      tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state">No Megascolia maculata detected at this confidence threshold.<br>Try lowering the confidence slider.</div></td></tr>`;
+    } else {
+      tbody.innerHTML = data.detections.map((d, i) => {
+        const barWidth = Math.round(d.confidence * 160);
+        const b = d.bbox;
+        return `<tr>
+          <td style="color:var(--muted)">${i + 1}</td>
+          <td><div class="conf-bar-wrap"><div class="conf-bar" style="width:${barWidth}px"></div><span class="conf-val">${d.confidence_pct}</span></div></td>
+          <td>(${b.x1}, ${b.y1}) → (${b.x2}, ${b.y2})</td>
+          <td>${d.width} × ${d.height} px</td>
+          <td>${d.area_pct}%</td>
+        </tr>`;
+      }).join("");
+    }
+    imgResultsSection.classList.add("visible");
+    imgResultsSection.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  /* ═══════════════════ VIDEO detect logic ═══════════════════ */
+  const vidFileInput = document.getElementById("vidFileInput");
+  const vidDropZone  = document.getElementById("vidDropZone");
+  const vidDropTitle = document.getElementById("vidDropTitle");
+  const vidDropMeta  = document.getElementById("vidDropMeta");
+  const vidRunBtn    = document.getElementById("vidRunBtn");
+  const vidStatus    = document.getElementById("vidStatus");
+  const vidErrorBox  = document.getElementById("vidErrorBox");
+  const vidResultsSection = document.getElementById("vidResultsSection");
+  const vidConfSlider = document.getElementById("vidConfSlider");
+  const vidConfVal    = document.getElementById("vidConfVal");
+  const vidIouSlider  = document.getElementById("vidIouSlider");
+  const vidIouVal     = document.getElementById("vidIouVal");
+
+  vidConfSlider.addEventListener("input", () => vidConfVal.textContent = parseFloat(vidConfSlider.value).toFixed(2));
+  vidIouSlider.addEventListener("input",  () => vidIouVal.textContent  = parseFloat(vidIouSlider.value).toFixed(2));
+
+  vidDropZone.addEventListener("dragover",  e => { e.preventDefault(); vidDropZone.classList.add("dragover"); });
+  vidDropZone.addEventListener("dragleave", () => vidDropZone.classList.remove("dragover"));
+  vidDropZone.addEventListener("drop", e => {
+    e.preventDefault(); vidDropZone.classList.remove("dragover");
+    const file = e.dataTransfer.files[0];
+    if (file) handleVidFile(file);
+  });
+  vidFileInput.addEventListener("change", () => { if (vidFileInput.files[0]) handleVidFile(vidFileInput.files[0]); });
+
+  function handleVidFile(file) {
+    vidDropTitle.textContent = file.name;
+    vidDropMeta.textContent = `${(file.size / (1024 * 1024)).toFixed(2)} MB`;
+    vidRunBtn.disabled = false;
+    vidResultsSection.classList.remove("visible");
+    vidErrorBox.classList.remove("visible");
+  }
+
+  vidRunBtn.addEventListener("click", async () => {
+    const file = vidFileInput.files[0];
+    if (!file) return;
+
+    vidRunBtn.disabled = true;
+    vidStatus.classList.add("visible");
+    vidErrorBox.classList.remove("visible");
+    vidResultsSection.classList.remove("visible");
+
+    const fd = new FormData();
+    fd.append("video", file);
+    fd.append("conf", vidConfSlider.value);
+    fd.append("iou",  vidIouSlider.value);
+
+    try {
+      const res = await fetch("/detect-video", { method: "POST", body: fd });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
+        throw new Error(err.error || `HTTP ${res.status}`);
+      }
+      renderVidResults(await res.json());
+    } catch (err) {
+      vidErrorBox.textContent = "Error processing video file: " + err.message;
+      vidErrorBox.classList.add("visible");
+    } finally {
+      vidStatus.classList.remove("visible");
+      vidRunBtn.disabled = false;
+    }
+  });
+
+  function renderVidResults(data) {
+    document.getElementById("vidOrig").src = URL.createObjectURL(vidFileInput.files[0]);
+    document.getElementById("vidAnno").src = data.video_url;
+
+    document.getElementById("vidCountPill").textContent = `Max concurrent: ${data.max_concurrent}`;
+    document.getElementById("vidTimePill").textContent  = `${data.inference_ms} ms total`;
+
+    document.getElementById("vidDetTable").innerHTML = `
+      <tr><td>Total video frames</td><td>${data.total_frames}</td></tr>
+      <tr><td>Frames containing active targets</td><td>${data.frames_with_wasps}</td></tr>
+      <tr><td>Max target density (single frame)</td><td>${data.max_concurrent} wasps</td></tr>
+      <tr><td>Unique individual wasps tracked</td><td>${data.unique_wasps} (ByteTrack ID)</td></tr>
+      <tr><td>Model processing speed</td><td style="color:var(--mint); font-weight:600;">${data.processed_fps} FPS</td></tr>
+      <tr><td>Output file</td><td><a href="${data.video_url}" download>Download annotated video</a></td></tr>
+    `;
+    vidResultsSection.classList.add("visible");
+    vidResultsSection.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  /* ═══════════════════ LEDGER (analytics) logic ═══════════════════ */
+  const daysSelect = document.getElementById("daysSelect");
+  let charts = {};
+
+  daysSelect.addEventListener("change", () => loadLedger());
+
+  async function loadLedger() {
+    const days = daysSelect.value;
+    const url = days === "0" ? "/api/stats?days=36500" : `/api/stats?days=${days}`;
+
+    try {
+      const res = await fetch(url);
+      const data = await res.json();
+      renderKpis(data);
+      renderCharts(data);
+      renderLedgerTable(data);
+    } catch (err) {
+      console.error("Failed to load ledger stats:", err);
+    }
+  }
+
+  function renderKpis(data) {
+    document.getElementById("kpiTotal").textContent = data.total_records ?? "0";
+    document.getElementById("kpiWasps").textContent  = data.total_wasps_found ?? "0";
+    document.getElementById("kpiConfidence").innerHTML =
+      data.avg_confidence != null ? `${(data.avg_confidence * 100).toFixed(1)}<span class="unit">%</span>` : "—";
+    document.getElementById("kpiInference").innerHTML =
+      data.avg_inference_ms != null ? `${data.avg_inference_ms.toFixed(0)}<span class="unit">ms</span>` : "—";
+    document.getElementById("kpiZeroHit").textContent =
+      data.zero_hit_rate != null ? `${(data.zero_hit_rate * 100).toFixed(1)}%` : "—";
+  }
+
+  const CHART_COLORS = {
+    mint:  "#B0E4CC",
+    forest: "#408A71",
+    amber: "#E0B34D",
+    grid:  "rgba(176,228,204,.08)",
+    text:  "#6E9686",
+  };
+
+  Chart.defaults.font.family = "'IBM Plex Mono', monospace";
+  Chart.defaults.font.size = 11;
+  Chart.defaults.color = CHART_COLORS.text;
+
+  function destroyChart(key) { if (charts[key]) { charts[key].destroy(); delete charts[key]; } }
+
+  function renderCharts(data) {
+    destroyChart("daily");
+    charts.daily = new Chart(document.getElementById("chartDaily"), {
+      type: "line",
+      data: {
+        labels: data.daily_series.map(d => d.date.slice(5)),
+        datasets: [{
+          label: "Requests",
+          data: data.daily_series.map(d => d.requests),
+          borderColor: CHART_COLORS.forest,
+          backgroundColor: "rgba(64,138,113,.15)",
+          fill: true, tension: .3, pointRadius: 2,
+        }],
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { grid: { color: CHART_COLORS.grid } },
+          y: { grid: { color: CHART_COLORS.grid }, beginAtZero: true, ticks: { precision: 0 } },
+        },
+      },
+    });
+
+    destroyChart("confidence");
+    charts.confidence = new Chart(document.getElementById("chartConfidence"), {
+      type: "bar",
+      data: {
+        labels: data.confidence_histogram.map(b => b.bucket),
+        datasets: [{
+          label: "Requests",
+          data: data.confidence_histogram.map(b => b.count),
+          backgroundColor: CHART_COLORS.mint,
+          borderRadius: 2,
+        }],
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { grid: { display: false }, ticks: { maxRotation: 45, minRotation: 45 } },
+          y: { grid: { color: CHART_COLORS.grid }, beginAtZero: true, ticks: { precision: 0 } },
+        },
+      },
+    });
+
+    destroyChart("inference");
+    charts.inference = new Chart(document.getElementById("chartInference"), {
+      type: "line",
+      data: {
+        labels: data.inference_series.map(p => p.timestamp.slice(5, 16)),
+        datasets: [{
+          label: "Inference (ms)",
+          data: data.inference_series.map(p => p.inference_ms),
+          borderColor: CHART_COLORS.amber,
+          backgroundColor: "rgba(224,179,77,.1)",
+          fill: true, tension: .25, pointRadius: 1,
+        }],
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { display: false },
+          y: { grid: { color: CHART_COLORS.grid }, beginAtZero: true },
+        },
+      },
+    });
+
+    destroyChart("source");
+    const sb = data.source_breakdown || {};
+    charts.source = new Chart(document.getElementById("chartSource"), {
+      type: "bar",
+      data: {
+        labels: Object.keys(sb).length ? Object.keys(sb) : ["image", "video"],
+        datasets: [{
+          label: "Wasps found",
+          data: Object.keys(sb).length ? Object.values(sb) : [0, 0],
+          backgroundColor: [CHART_COLORS.forest, CHART_COLORS.amber],
+          borderRadius: 2,
+        }],
+      },
+      options: {
+        responsive: true, indexAxis: "y",
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { grid: { color: CHART_COLORS.grid }, beginAtZero: true, ticks: { precision: 0 } },
+          y: { grid: { display: false } },
+        },
+      },
+    });
+  }
+
+  function renderLedgerTable(data) {
+    const tbody = document.getElementById("ledgerTable");
+    const records = data.recent_records || [];
+
+    if (records.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="glyph">◈</div>No records yet. Run a detection to begin the ledger.</div></td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = records.map(r => `
+      <tr>
+        <td class="specimen-tag">${r.specimen_tag}</td>
+        <td>${r.timestamp}</td>
+        <td><span class="source-chip ${r.source_type}">${r.source_type}</span></td>
+        <td>${r.filename}</td>
+        <td>${r.detection_count}</td>
+        <td>${r.avg_confidence != null ? (r.avg_confidence * 100).toFixed(1) + '%' : '—'}</td>
+        <td>${r.inference_ms != null ? r.inference_ms.toFixed(1) + ' ms' : '—'}</td>
+      </tr>
+    `).join("");
+  }
+
+  // Load ledger stats once at startup too, so switching tabs later is instant on repeat visits
+  document.addEventListener("DOMContentLoaded", () => { /* lazy: loaded on first Ledger tab click */ });
+</script>
+</body>
+</html>
